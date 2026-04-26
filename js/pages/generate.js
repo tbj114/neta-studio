@@ -1478,6 +1478,16 @@ class GeneratePage {
           <span class="text-xs text-tertiary mt-sm" style="display:block">从已生成的图片中选择一张作为元素预览图</span>
         </div>
         <div class="form-group">
+          <label class="form-label">模型</label>
+          <select class="form-select" id="create-element-model">
+            <option value="">自动</option>
+            <option value="2_netaxl">模型 2.0</option>
+            <option value="3_noobxl">模型 3.0</option>
+            <option value="5_lumina">Lumina</option>
+            <option value="8_image_edit">图片编辑</option>
+          </select>
+        </div>
+        <div class="form-group">
           <label class="form-label">可见性</label>
           <div style="display:flex;gap:8px">
             <button class="ratio-btn active" data-access="PUBLIC">公开</button>
@@ -1507,6 +1517,7 @@ class GeneratePage {
       const name = container.querySelector('#create-element-name').value.trim();
       const prompt = container.querySelector('#create-element-prompt').value.trim();
       const artifactIdx = container.querySelector('#create-element-artifact').value;
+      const modelSeries = container.querySelector('#create-element-model').value || null;
       const submitBtn = container.querySelector('#create-element-submit');
 
       if (!name) { Components.Toast.error('请输入元素名称'); return; }
@@ -1526,6 +1537,7 @@ class GeneratePage {
           artifact_uuid: result.uuid,
           description: prompt,
           accessibility,
+          context_model_series: modelSeries,
         });
 
         const elem = res?.data || res;
