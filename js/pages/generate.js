@@ -1465,24 +1465,12 @@ class GeneratePage {
           <textarea class="form-input" id="create-element-prompt" placeholder="描述这个元素的特征" rows="2" style="min-height:50px;resize:vertical;font-size:14px"></textarea>
         </div>
 
-        <!-- 模型 + 可见性 并排 -->
-        <div style="display:flex;gap:10px">
-          <div style="flex:1">
-            <label class="form-label" style="margin-bottom:6px;display:block">模型</label>
-            <select class="form-select" id="create-element-model" style="font-size:14px">
-              <option value="">自动</option>
-              <option value="2_netaxl">2.0</option>
-              <option value="3_noobxl">3.0</option>
-              <option value="5_lumina">Lumina</option>
-              <option value="8_image_edit">编辑</option>
-            </select>
-          </div>
-          <div style="flex:1">
-            <label class="form-label" style="margin-bottom:6px;display:block">可见性</label>
-            <div style="display:flex;gap:6px">
-              <button class="ratio-btn active" data-access="PUBLIC" style="flex:1;font-size:13px">公开</button>
-              <button class="ratio-btn" data-access="PRIVATE" style="flex:1;font-size:13px">私密</button>
-            </div>
+        <!-- 可见性 -->
+        <div>
+          <label class="form-label" style="margin-bottom:6px;display:block">可见性</label>
+          <div style="display:flex;gap:6px">
+            <button class="ratio-btn active" data-access="PUBLIC" style="flex:1;font-size:13px">公开</button>
+            <button class="ratio-btn" data-access="PRIVATE" style="flex:1;font-size:13px">私密</button>
           </div>
         </div>
 
@@ -1520,7 +1508,6 @@ class GeneratePage {
       const name = container.querySelector('#create-element-name').value.trim();
       const prompt = container.querySelector('#create-element-prompt').value.trim();
       const artifactIdx = container.querySelector('#create-element-artifact').value;
-      const modelSeries = container.querySelector('#create-element-model').value || null;
       const submitBtn = container.querySelector('#create-element-submit');
 
       if (!name) { Components.Toast.error('请输入元素名称'); return; }
@@ -1540,7 +1527,6 @@ class GeneratePage {
           artifact_uuid: result.uuid,
           description: prompt,
           accessibility,
-          context_model_series: modelSeries,
         });
 
         const elem = res?.data || res;
