@@ -877,21 +877,24 @@ class GeneratePage {
     this._setSubmitLoading(true);
 
     try {
-      const data = this._buildGenerateData();
-      console.log('[Nieta] 生成请求:', JSON.stringify(data).slice(0, 500));
-
       let response;
-        if (this.mode === 'image') {
-          response = await API.Artifact.makeImage(data);
-        } else if (this.mode === 'music') {
-          response = await API.Audio.makeSong(
-            prompt,
-            this.els.musicLyrics ? this.els.musicLyrics.value.trim() : '',
-            { entrance: 'PICTURE,PURE' }
-          );
-        } else {
-          response = await API.Artifact.makeVideo(data);
-        }
+
+      if (this.mode === 'image') {
+        const data = this._buildGenerateData();
+        console.log('[Nieta] 生成请求:', JSON.stringify(data).slice(0, 500));
+        response = await API.Artifact.makeImage(data);
+      } else if (this.mode === 'music') {
+        const lyrics = this.els.musicLyrics ? this.els.musicLyrics.value.trim() : '';
+        console.log('[Nieta] 音乐请求:', JSON.stringify({ prompt, lyrics }));
+        response = await API.Audio.makeSong(prompt, lyrics, { entrance: 'VERSE' });
+      } else {
+        const data = this._buildGenerateData();
+        // 视频模式：使用视频模型，移除图片专属字段
+        delete data.context_model_series;
+        data.video_model = this.params.videoModel || 'seedance_2_0';
+        console.log('[Nieta] 视频请求:', JSON.stringify(data).slice(0, 500));
+        response = await API.Artifact.makeVideo(data);
+      }
 
         const tasks = this._parseTaskResponse(response);
 
@@ -1326,6 +1329,7 @@ class GeneratePage {
           description: descInput.value.trim(),
           coverUrl: result.url || '',
           status: 'PUBLISHED',
+          displayData: { source: 'neta-studio', type: result.type || 'picture' },
         });
 
         // Step 3: 发布故事（query parameter，不是 body）
@@ -1400,6 +1404,9 @@ class GeneratePage {
         this._quickPickSearchQuery = '';
         const searchInput = panel.querySelector('#quick-pick-search-input');
         if (searchInput) searchInput.value = '';
+        // 恢复 grid 显示（创建元素表单会隐藏它）
+        const gridEl = panel.querySelector('#quick-pick-grid');
+        if (gridEl) gridEl.style.display = '';
         this._loadQuickPickItems();
       });
     });
@@ -1658,8 +1665,11 @@ class GeneratePage {
           break;
         }
         case 'create-element': {
-          // 显示创建元素表单
-          this._renderCreateElementForm(grid);
+          // 显示创建元素表单（渲染到 content 而非 grid）
+          const content = this._quickPickPanel?.querySelector('#quick-pick-content');
+          const grid = this._quickPickPanel?.querySelector('#quick-pick-grid');
+          if (grid) grid.style.display = 'none';
+          this._renderCreateElementForm(content || grid);
           return;
         }
       }

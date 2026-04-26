@@ -2755,6 +2755,31 @@ textarea.form-input {
   object-fit: cover;
 }
 
+/* ============================================
+   创建元素表单（响应式）
+   ============================================ */
+#create-element-thumbs {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 4px 0 8px;
+  -webkit-overflow-scrolling: touch;
+}
+
+#create-element-thumbs::-webkit-scrollbar { display: none; }
+
+#create-element-thumbs .publish-thumb {
+  flex: 0 0 72px;
+  height: 72px;
+  border-radius: var(--radius-md);
+  border: 2px solid transparent;
+  transition: border-color var(--transition-fast);
+}
+
+#create-element-thumbs .publish-thumb.selected {
+  border-color: var(--brand-pink);
+}
+
 @keyframes pulse {
   0%, 100% { transform: scale(1); opacity: 1; }
   50% { transform: scale(1.05); opacity: 0.8; }
