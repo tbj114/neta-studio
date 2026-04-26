@@ -834,8 +834,9 @@ class GeneratePage {
       h = Math.round(scale * h / 64) * 64;
     }
 
-    // 模型 series（空字符串表示自动，API 传 null）
-    const modelSeries = this.params.imageModel || null;
+    // 模型 series（直接从 DOM 读取当前选中值）
+    const imageModelValue = this.els.imageModelSelect ? this.els.imageModelSelect.value : '';
+    const modelSeries = imageModelValue || null;
 
     const base = {
       storyId: '',
