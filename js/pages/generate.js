@@ -886,12 +886,11 @@ class GeneratePage {
       } else if (this.mode === 'music') {
         const lyrics = this.els.musicLyrics ? this.els.musicLyrics.value.trim() : '';
         console.log('[Nieta] 音乐请求:', JSON.stringify({ prompt, lyrics }));
-        response = await API.Audio.makeSong(prompt, lyrics, { entrance: 'VERSE' });
+        response = await API.Audio.makeSong(prompt, lyrics || ' ', { entrance: 'VERSE' });
       } else {
         const data = this._buildGenerateData();
-        // 视频模式：使用视频模型，移除图片专属字段
-        delete data.context_model_series;
-        data.video_model = this.params.videoModel || 'seedance_2_0';
+        // 视频模式：使用视频模型
+        data.context_model_series = this.params.videoModel || 'seedance_2_0';
         console.log('[Nieta] 视频请求:', JSON.stringify(data).slice(0, 500));
         response = await API.Artifact.makeVideo(data);
       }
