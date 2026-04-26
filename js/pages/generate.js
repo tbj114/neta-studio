@@ -97,17 +97,14 @@ class GeneratePage {
               </div>
             </div>
 
-            <!-- 生成数量 -->
-            <div class="gen-option-row" id="mobile-row-count">
-              <span class="gen-option-label">数量</span>
-              <div class="gen-option-value">
-                <select class="form-select" id="mobile-gen-count" style="width:80px">
-                  <option value="1">1</option>
-                  <option value="2" selected>2</option>
-                  <option value="4">4</option>
-                  <option value="6">6</option>
-                  <option value="8">8</option>
-                </select>
+            <!-- Seed -->
+            <div class="gen-option-row" id="mobile-row-seed">
+              <span class="gen-option-label">Seed</span>
+              <div class="gen-option-value" style="display:flex;gap:6px;align-items:center;flex:1">
+                <input type="number" class="form-input" id="mobile-gen-seed" placeholder="留空随机" style="flex:1;min-width:0" />
+                <button class="btn btn-sm btn-secondary" id="mobile-gen-seed-random" title="随机 Seed" style="padding:8px 10px;min-height:36px;flex-shrink:0">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 4v6h6"/><path d="M23 20v-6h-6"/><path d="M20.49 9A9 9 0 005.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 013.51 15"/></svg>
+                </button>
               </div>
             </div>
 
@@ -164,17 +161,6 @@ class GeneratePage {
               <span class="gen-option-label">歌词</span>
               <div class="gen-option-value" style="width:100%">
                 <textarea class="form-input" id="mobile-gen-music-lyrics" placeholder="输入歌词（可选，留空则自动生成）" rows="4" style="min-height:80px;resize:vertical;font-size:14px"></textarea>
-              </div>
-            </div>
-
-            <!-- Seed -->
-            <div class="gen-option-row" id="mobile-row-seed">
-              <span class="gen-option-label">Seed</span>
-              <div class="gen-option-value" style="display:flex;gap:6px;align-items:center;flex:1">
-                <input type="number" class="form-input" id="mobile-gen-seed" placeholder="留空随机" style="flex:1;min-width:0" />
-                <button class="btn btn-sm btn-secondary" id="mobile-gen-seed-random" title="随机 Seed" style="padding:8px 10px;min-height:36px;flex-shrink:0">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 4v6h6"/><path d="M23 20v-6h-6"/><path d="M20.49 9A9 9 0 005.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 013.51 15"/></svg>
-                </button>
               </div>
             </div>
           </div>
@@ -247,7 +233,6 @@ class GeneratePage {
     this.els.paramsToggle = this.container.querySelector('#gen-mobile-params-toggle');
     this.els.paramsPanel = this.container.querySelector('#gen-mobile-params-panel');
     this.els.ratioGroup = this.container.querySelector('#mobile-ratio-group');
-    this.els.countSelect = this.container.querySelector('#mobile-gen-count');
     this.els.scaleInput = this.container.querySelector('#mobile-gen-scale');
     this.els.scaleValue = this.container.querySelector('#mobile-gen-scale-value');
     this.els.rowScale = this.container.querySelector('#mobile-row-scale');
@@ -320,11 +305,6 @@ class GeneratePage {
       this.els.ratioGroup.querySelectorAll('.ratio-btn').forEach(b => {
         b.classList.toggle('active', b.dataset.ratio === this.params.ratio);
       });
-    });
-
-    // 数量
-    this.els.countSelect.addEventListener('change', (e) => {
-      this.params.count = parseInt(e.target.value, 10);
     });
 
     // 视频时长
@@ -725,21 +705,13 @@ class GeneratePage {
     this.els.rowVideoModel.classList.toggle('hidden', !isVideo);
     this.els.rowVideoDuration.classList.toggle('hidden', !isVideo);
     this.els.rowVideoResolution.classList.toggle('hidden', !isVideo);
-    this.els.rowCount.classList.toggle('hidden', !isImage);
+
     this.els.rowMusicLyrics.classList.toggle('hidden', !isMusic);
 
     // 宽高比在音乐模式下隐藏
     this.els.ratioGroup.closest('.gen-option-row').classList.toggle('hidden', isMusic);
     // 缩放和数量仅在图片模式显示
     if (this.els.rowScale) this.els.rowScale.classList.toggle('hidden', !isImage);
-
-    if (!isImage) {
-      this.els.countSelect.value = '1';
-      this.els.countSelect.disabled = true;
-      this.params.count = 1;
-    } else {
-      this.els.countSelect.disabled = false;
-    }
 
     // 更新 placeholder
     if (isMusic) {
@@ -908,11 +880,7 @@ class GeneratePage {
       const data = this._buildGenerateData();
       console.log('[Nieta] 生成请求:', JSON.stringify(data).slice(0, 500));
 
-      const count = (this.mode === 'image') ? (this.params.count || 1) : 1;
-      const tasks = [];
-
-      for (let i = 0; i < count; i++) {
-        let response;
+      let response;
         if (this.mode === 'image') {
           response = await API.Artifact.makeImage(data);
         } else if (this.mode === 'music') {
@@ -924,9 +892,8 @@ class GeneratePage {
         } else {
           response = await API.Artifact.makeVideo(data);
         }
-        const parsed = this._parseTaskResponse(response);
-        tasks.push(...parsed);
-      }
+
+        const tasks = this._parseTaskResponse(response);
 
       if (tasks.length === 0) {
         Components.Toast.error('未获取到生成任务');
@@ -1457,49 +1424,78 @@ class GeneratePage {
     const completedResults = this.results.filter(r => r.status === 'completed' && r.url);
 
     const resultOptions = completedResults.length > 0
-      ? completedResults.map((r, i) => `<option value="${i}">${r.uuid ? r.uuid.slice(0, 8) : '图片'} ${i + 1}</option>`).join('')
+      ? completedResults.map((r, i) => `<option value="${i}">图片 ${i + 1}</option>`).join('')
       : '<option value="">暂无已生成的图片</option>';
 
     container.innerHTML = `
-      <div style="display:flex;flex-direction:column;gap:16px;padding:8px">
-        <div class="form-group">
-          <label class="form-label">元素名称 *</label>
-          <input type="text" class="form-input" id="create-element-name" placeholder="给元素起个名字" maxlength="50" />
+      <div style="display:flex;flex-direction:column;gap:14px;padding:4px 0">
+        <!-- 预览图选择 -->
+        <div>
+          <label class="form-label" style="margin-bottom:8px;display:block">选择预览图 *</label>
+          ${completedResults.length > 0
+            ? `<div class="publish-images-row" id="create-element-thumbs">
+                ${completedResults.map((r, i) => `
+                  <div class="publish-thumb ${i === 0 ? 'selected' : ''}" data-index="${i}">
+                    <img src="${r.url}" alt="图片${i+1}" />
+                  </div>
+                `).join('')}
+              </div>
+              <input type="hidden" id="create-element-artifact" value="0" />`
+            : `<div style="text-align:center;padding:20px;color:var(--text-tertiary);font-size:13px">请先生成一张图片</div>
+               <input type="hidden" id="create-element-artifact" value="" />`
+          }
         </div>
-        <div class="form-group">
-          <label class="form-label">描述 Prompt *</label>
-          <textarea class="form-input" id="create-element-prompt" placeholder="描述这个元素的特征（如：赛博朋克风格，霓虹灯光效）" rows="3" style="min-height:60px;resize:vertical;font-size:14px"></textarea>
+
+        <!-- 元素名称 -->
+        <div>
+          <label class="form-label" style="margin-bottom:6px;display:block">元素名称 *</label>
+          <input type="text" class="form-input" id="create-element-name" placeholder="给元素起个名字" maxlength="50" style="font-size:15px" />
         </div>
-        <div class="form-group">
-          <label class="form-label">选择预览图 *</label>
-          <select class="form-select" id="create-element-artifact" ${completedResults.length === 0 ? 'disabled' : ''}>
-            ${resultOptions}
-          </select>
-          <span class="text-xs text-tertiary mt-sm" style="display:block">从已生成的图片中选择一张作为元素预览图</span>
+
+        <!-- 描述 Prompt -->
+        <div>
+          <label class="form-label" style="margin-bottom:6px;display:block">描述 Prompt *</label>
+          <textarea class="form-input" id="create-element-prompt" placeholder="描述这个元素的特征" rows="2" style="min-height:50px;resize:vertical;font-size:14px"></textarea>
         </div>
-        <div class="form-group">
-          <label class="form-label">模型</label>
-          <select class="form-select" id="create-element-model">
-            <option value="">自动</option>
-            <option value="2_netaxl">模型 2.0</option>
-            <option value="3_noobxl">模型 3.0</option>
-            <option value="5_lumina">Lumina</option>
-            <option value="8_image_edit">图片编辑</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label class="form-label">可见性</label>
-          <div style="display:flex;gap:8px">
-            <button class="ratio-btn active" data-access="PUBLIC">公开</button>
-            <button class="ratio-btn" data-access="PRIVATE">私密</button>
+
+        <!-- 模型 + 可见性 并排 -->
+        <div style="display:flex;gap:10px">
+          <div style="flex:1">
+            <label class="form-label" style="margin-bottom:6px;display:block">模型</label>
+            <select class="form-select" id="create-element-model" style="font-size:14px">
+              <option value="">自动</option>
+              <option value="2_netaxl">2.0</option>
+              <option value="3_noobxl">3.0</option>
+              <option value="5_lumina">Lumina</option>
+              <option value="8_image_edit">编辑</option>
+            </select>
+          </div>
+          <div style="flex:1">
+            <label class="form-label" style="margin-bottom:6px;display:block">可见性</label>
+            <div style="display:flex;gap:6px">
+              <button class="ratio-btn active" data-access="PUBLIC" style="flex:1;font-size:13px">公开</button>
+              <button class="ratio-btn" data-access="PRIVATE" style="flex:1;font-size:13px">私密</button>
+            </div>
           </div>
         </div>
-        <button class="btn btn-primary btn-lg w-full" id="create-element-submit" ${completedResults.length === 0 ? 'disabled' : ''}>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+
+        <!-- 提交按钮 -->
+        <button class="btn btn-primary w-full" id="create-element-submit" ${completedResults.length === 0 ? 'disabled' : ''} style="padding:12px;font-size:15px;border-radius:var(--radius-lg)">
           创建元素
         </button>
       </div>
     `;
+
+    // 缩略图点击选择
+    const thumbs = container.querySelectorAll('#create-element-thumbs .publish-thumb');
+    const hiddenInput = container.querySelector('#create-element-artifact');
+    thumbs.forEach(thumb => {
+      thumb.addEventListener('click', () => {
+        thumbs.forEach(t => t.classList.remove('selected'));
+        thumb.classList.add('selected');
+        if (hiddenInput) hiddenInput.value = thumb.dataset.index;
+      });
+    });
 
     // 可见性切换
     const accessBtns = container.querySelectorAll('[data-access]');
