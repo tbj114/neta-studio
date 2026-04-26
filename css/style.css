@@ -299,10 +299,11 @@ input, textarea, select { font-family: inherit; color: inherit; -webkit-tap-high
 
 /* ====== 移动端页面容器 ====== */
 .app-shell > .page-container-mobile {
-  display: block;
+  display: flex;
+  flex-direction: column;
   flex: 1;
-  overflow-y: auto;
-  overflow-x: hidden;
+  min-height: 0;
+  overflow: hidden;
   -webkit-overflow-scrolling: touch;
 }
 

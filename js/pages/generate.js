@@ -907,21 +907,27 @@ class GeneratePage {
     try {
       const data = this._buildGenerateData();
       console.log('[Nieta] 生成请求:', JSON.stringify(data).slice(0, 500));
-      let response;
 
-      if (this.mode === 'image') {
-        response = await API.Artifact.makeImage(data);
-      } else if (this.mode === 'music') {
-        response = await API.Audio.makeSong(
-          prompt,
-          this.els.musicLyrics ? this.els.musicLyrics.value.trim() : '',
-          { entrance: 'PICTURE,PURE' }
-        );
-      } else {
-        response = await API.Artifact.makeVideo(data);
+      const count = (this.mode === 'image') ? (this.params.count || 1) : 1;
+      const tasks = [];
+
+      for (let i = 0; i < count; i++) {
+        let response;
+        if (this.mode === 'image') {
+          response = await API.Artifact.makeImage(data);
+        } else if (this.mode === 'music') {
+          response = await API.Audio.makeSong(
+            prompt,
+            this.els.musicLyrics ? this.els.musicLyrics.value.trim() : '',
+            { entrance: 'PICTURE,PURE' }
+          );
+        } else {
+          response = await API.Artifact.makeVideo(data);
+        }
+        const parsed = this._parseTaskResponse(response);
+        tasks.push(...parsed);
       }
 
-      const tasks = this._parseTaskResponse(response);
       if (tasks.length === 0) {
         Components.Toast.error('未获取到生成任务');
         return;
@@ -1567,6 +1573,22 @@ class GeneratePage {
     }
   }
 
+  // 从 API 响应中提取列表（兼容多种嵌套格式）
+  _extractList(res) {
+    if (!res) return [];
+    // 直接是数组
+    if (Array.isArray(res)) return res;
+    // { data: [...] } 或 { data: { list: [...] } }
+    const d = res.data;
+    if (Array.isArray(d)) return d;
+    if (d && Array.isArray(d.list)) return d.list;
+    if (d && Array.isArray(d.items)) return d.items;
+    // { list: [...] }
+    if (Array.isArray(res.list)) return res.list;
+    if (Array.isArray(res.items)) return res.items;
+    return [];
+  }
+
   async _loadQuickPickItems() {
     const grid = this._quickPickPanel?.querySelector('#quick-pick-grid');
     if (!grid) return;
@@ -1579,9 +1601,9 @@ class GeneratePage {
 
       switch (this._quickPickTab) {
         case 'my-characters': {
-          const data = await API.Character.typeahead(query);
-          const list = data?.list || data?.data || data || [];
-          items = (Array.isArray(list) ? list : []).map(item => ({
+          const res = await API.Character.typeahead(query);
+          const list = this._extractList(res);
+          items = list.map(item => ({
             ...item,
             name: item.name || item.short_name || '',
             avatar: item.config?.avatar_img || item.avatar || item.thumbnail || '',
@@ -1591,10 +1613,9 @@ class GeneratePage {
           break;
         }
         case 'fav-characters': {
-          // 使用通用搜索或收藏端点
-          const data = await API.Character.typeahead(query);
-          const list = data?.list || data?.data || data || [];
-          items = (Array.isArray(list) ? list : []).map(item => ({
+          const res = await API.Character.typeahead(query);
+          const list = this._extractList(res);
+          items = list.map(item => ({
             ...item,
             name: item.name || item.short_name || '',
             avatar: item.config?.avatar_img || item.avatar || item.thumbnail || '',
@@ -1611,10 +1632,10 @@ class GeneratePage {
             pose: 'elementum-pose',
             scene: 'elementum-scene',
           };
-          const data = await API.Elementum.typeahead(query, 'elementum');
-          const list = data?.list || data?.data || data || [];
+          const res = await API.Elementum.typeahead(query, 'elementum');
+          const list = this._extractList(res);
           const targetSubType = subTypeMap[this._quickPickTab] || this._quickPickTab;
-          items = (Array.isArray(list) ? list : [])
+          items = list
             .filter(item => {
               const sub = item.sub_type || item.type || '';
               return sub.includes(targetSubType) || sub.includes(this._quickPickTab);
@@ -1639,7 +1660,11 @@ class GeneratePage {
       this._renderQuickPickItems(items);
     } catch (err) {
       console.warn('快速选取加载失败:', err);
-      grid.innerHTML = '<div class="quick-pick-empty">加载失败，请重试</div>';
+      const isAuth = err?.status === 403 || err?.status === 401;
+      grid.innerHTML = `<div class="quick-pick-empty">
+        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
+        <span>${isAuth ? '请先设置 Token 后查看' : '加载失败，请重试'}</span>
+      </div>`;
     }
   }
 
