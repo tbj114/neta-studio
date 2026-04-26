@@ -1534,6 +1534,9 @@ textarea.form-input {
 
 .gen-mobile-params-panel.open {
   display: block;
+  max-height: 40vh;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .gen-mobile-params-panel .gen-options {
