@@ -81,6 +81,105 @@ class GeneratePage {
           </div>
         </div>
 
+        <!-- 可折叠参数面板（独立滚动区域） -->
+        <div class="gen-mobile-params-panel" id="gen-mobile-params-panel">
+          <div class="gen-options">
+            <!-- 宽高比 -->
+            <div class="gen-option-row">
+              <span class="gen-option-label">宽高比</span>
+              <div class="gen-option-value ratio-group" id="mobile-ratio-group">
+                <button class="ratio-btn active" data-ratio="1:1">1:1</button>
+                <button class="ratio-btn" data-ratio="3:4">3:4</button>
+                <button class="ratio-btn" data-ratio="4:3">4:3</button>
+                <button class="ratio-btn" data-ratio="9:16">9:16</button>
+                <button class="ratio-btn" data-ratio="16:9">16:9</button>
+                <button class="ratio-btn" data-ratio="21:9">21:9</button>
+              </div>
+            </div>
+
+            <!-- 生成数量 -->
+            <div class="gen-option-row" id="mobile-row-count">
+              <span class="gen-option-label">数量</span>
+              <div class="gen-option-value">
+                <select class="form-select" id="mobile-gen-count" style="width:80px">
+                  <option value="1">1</option>
+                  <option value="2" selected>2</option>
+                  <option value="4">4</option>
+                  <option value="6">6</option>
+                  <option value="8">8</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- 缩放比例 -->
+            <div class="gen-option-row" id="mobile-row-scale">
+              <span class="gen-option-label">缩放</span>
+              <div class="gen-option-value" style="display:flex;align-items:center;gap:8px;flex:1">
+                <input type="range" id="mobile-gen-scale" min="0.1" max="2" step="0.1" value="1" style="flex:1;accent-color:var(--brand-pink)" />
+                <span id="mobile-gen-scale-value" style="font-size:13px;color:var(--text-secondary);min-width:32px;text-align:center">1.0</span>
+              </div>
+            </div>
+
+            <!-- 图片模型 -->
+            <div class="gen-option-row" id="mobile-row-image-model">
+              <span class="gen-option-label">模型</span>
+              <div class="gen-option-value">
+                <select class="form-select" id="mobile-gen-image-model">
+                  ${modelOptions}
+                </select>
+              </div>
+            </div>
+
+            <!-- 视频模型 -->
+            <div class="gen-option-row hidden" id="mobile-row-video-model">
+              <span class="gen-option-label">视频模型</span>
+              <div class="gen-option-value">
+                <select class="form-select" id="mobile-gen-video-model" disabled>
+                  <option value="seedance_2_0">Seedance 2.0</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- 视频时长 -->
+            <div class="gen-option-row hidden" id="mobile-row-video-duration">
+              <span class="gen-option-label">时长</span>
+              <div class="gen-option-value ratio-group" id="mobile-duration-group">
+                <button class="ratio-btn active" data-duration="5s">5s</button>
+                <button class="ratio-btn" data-duration="10s">10s</button>
+                <button class="ratio-btn" data-duration="15s">15s</button>
+              </div>
+            </div>
+
+            <!-- 视频分辨率 -->
+            <div class="gen-option-row hidden" id="mobile-row-video-resolution">
+              <span class="gen-option-label">分辨率</span>
+              <div class="gen-option-value ratio-group" id="mobile-resolution-group">
+                <button class="ratio-btn" data-resolution="480p">480p</button>
+                <button class="ratio-btn active" data-resolution="720p">720p</button>
+              </div>
+            </div>
+
+            <!-- 音乐歌词 -->
+            <div class="gen-option-row hidden" id="mobile-row-music-lyrics">
+              <span class="gen-option-label">歌词</span>
+              <div class="gen-option-value" style="width:100%">
+                <textarea class="form-input" id="mobile-gen-music-lyrics" placeholder="输入歌词（可选，留空则自动生成）" rows="4" style="min-height:80px;resize:vertical;font-size:14px"></textarea>
+              </div>
+            </div>
+
+            <!-- Seed -->
+            <div class="gen-option-row" id="mobile-row-seed">
+              <span class="gen-option-label">Seed</span>
+              <div class="gen-option-value" style="display:flex;gap:6px;align-items:center;flex:1">
+                <input type="number" class="form-input" id="mobile-gen-seed" placeholder="留空随机" style="flex:1;min-width:0" />
+                <button class="btn btn-sm btn-secondary" id="mobile-gen-seed-random" title="随机 Seed" style="padding:8px 10px;min-height:36px;flex-shrink:0">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 4v6h6"/><path d="M23 20v-6h-6"/><path d="M20.49 9A9 9 0 005.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 013.51 15"/></svg>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <!-- 底部固定输入栏 -->
         <div class="gen-mobile-input-bar" id="gen-mobile-input-bar">
           <!-- 模式切换（药丸按钮） -->
@@ -131,105 +230,6 @@ class GeneratePage {
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
             <span>参数设置</span>
           </button>
-
-          <!-- 可折叠参数面板 -->
-          <div class="gen-mobile-params-panel" id="gen-mobile-params-panel">
-            <div class="gen-options">
-              <!-- 宽高比 -->
-              <div class="gen-option-row">
-                <span class="gen-option-label">宽高比</span>
-                <div class="gen-option-value ratio-group" id="mobile-ratio-group">
-                  <button class="ratio-btn active" data-ratio="1:1">1:1</button>
-                  <button class="ratio-btn" data-ratio="3:4">3:4</button>
-                  <button class="ratio-btn" data-ratio="4:3">4:3</button>
-                  <button class="ratio-btn" data-ratio="9:16">9:16</button>
-                  <button class="ratio-btn" data-ratio="16:9">16:9</button>
-                  <button class="ratio-btn" data-ratio="21:9">21:9</button>
-                </div>
-              </div>
-
-              <!-- 生成数量 -->
-              <div class="gen-option-row" id="mobile-row-count">
-                <span class="gen-option-label">数量</span>
-                <div class="gen-option-value">
-                  <select class="form-select" id="mobile-gen-count" style="width:80px">
-                    <option value="1">1</option>
-                    <option value="2" selected>2</option>
-                    <option value="4">4</option>
-                    <option value="6">6</option>
-                    <option value="8">8</option>
-                  </select>
-                </div>
-              </div>
-
-              <!-- 缩放比例 -->
-              <div class="gen-option-row" id="mobile-row-scale">
-                <span class="gen-option-label">缩放</span>
-                <div class="gen-option-value" style="display:flex;align-items:center;gap:8px;flex:1">
-                  <input type="range" id="mobile-gen-scale" min="0.1" max="2" step="0.1" value="1" style="flex:1;accent-color:var(--brand-pink)" />
-                  <span id="mobile-gen-scale-value" style="font-size:13px;color:var(--text-secondary);min-width:32px;text-align:center">1.0</span>
-                </div>
-              </div>
-
-              <!-- 图片模型 -->
-              <div class="gen-option-row" id="mobile-row-image-model">
-                <span class="gen-option-label">模型</span>
-                <div class="gen-option-value">
-                  <select class="form-select" id="mobile-gen-image-model">
-                    ${modelOptions}
-                  </select>
-                </div>
-              </div>
-
-              <!-- 视频模型 -->
-              <div class="gen-option-row hidden" id="mobile-row-video-model">
-                <span class="gen-option-label">视频模型</span>
-                <div class="gen-option-value">
-                  <select class="form-select" id="mobile-gen-video-model" disabled>
-                    <option value="seedance_2_0">Seedance 2.0</option>
-                  </select>
-                </div>
-              </div>
-
-              <!-- 视频时长 -->
-              <div class="gen-option-row hidden" id="mobile-row-video-duration">
-                <span class="gen-option-label">时长</span>
-                <div class="gen-option-value ratio-group" id="mobile-duration-group">
-                  <button class="ratio-btn active" data-duration="5s">5s</button>
-                  <button class="ratio-btn" data-duration="10s">10s</button>
-                  <button class="ratio-btn" data-duration="15s">15s</button>
-                </div>
-              </div>
-
-              <!-- 视频分辨率 -->
-              <div class="gen-option-row hidden" id="mobile-row-video-resolution">
-                <span class="gen-option-label">分辨率</span>
-                <div class="gen-option-value ratio-group" id="mobile-resolution-group">
-                  <button class="ratio-btn" data-resolution="480p">480p</button>
-                  <button class="ratio-btn active" data-resolution="720p">720p</button>
-                </div>
-              </div>
-
-              <!-- 音乐歌词 -->
-              <div class="gen-option-row hidden" id="mobile-row-music-lyrics">
-                <span class="gen-option-label">歌词</span>
-                <div class="gen-option-value" style="width:100%">
-                  <textarea class="form-input" id="mobile-gen-music-lyrics" placeholder="输入歌词（可选，留空则自动生成）" rows="4" style="min-height:80px;resize:vertical;font-size:14px"></textarea>
-                </div>
-              </div>
-
-              <!-- Seed -->
-              <div class="gen-option-row" id="mobile-row-seed">
-                <span class="gen-option-label">Seed</span>
-                <div class="gen-option-value" style="display:flex;gap:6px;align-items:center;flex:1">
-                  <input type="number" class="form-input" id="mobile-gen-seed" placeholder="留空随机" style="flex:1;min-width:0" />
-                  <button class="btn btn-sm btn-secondary" id="mobile-gen-seed-random" title="随机 Seed" style="padding:8px 10px;min-height:36px;flex-shrink:0">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 4v6h6"/><path d="M23 20v-6h-6"/><path d="M20.49 9A9 9 0 005.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 013.51 15"/></svg>
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
         </div>
       </div>
     `;

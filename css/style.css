@@ -1528,15 +1528,18 @@ textarea.form-input {
 
 .gen-mobile-params-panel {
   display: none;
-  padding: var(--space-md) 0;
-  border-top: 1px solid var(--border-secondary);
+  flex-shrink: 0;
+  border-top: 1px solid var(--border-primary);
+  background: var(--bg-secondary);
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  max-height: 0;
+  transition: max-height 0.3s ease;
 }
 
 .gen-mobile-params-panel.open {
   display: block;
   max-height: 40vh;
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
 }
 
 .gen-mobile-params-panel .gen-options {
