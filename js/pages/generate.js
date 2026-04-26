@@ -881,6 +881,7 @@ class GeneratePage {
 
       if (this.mode === 'image') {
         const data = this._buildGenerateData();
+        console.log('[Nieta] 生成请求 model:', data.context_model_series, 'params.imageModel:', this.params.imageModel);
         console.log('[Nieta] 生成请求:', JSON.stringify(data).slice(0, 500));
         response = await API.Artifact.makeImage(data);
       } else if (this.mode === 'music') {

@@ -1531,19 +1531,22 @@ textarea.form-input {
   flex-shrink: 0;
   border-top: 1px solid var(--border-primary);
   background: var(--bg-secondary);
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
   max-height: 0;
   transition: max-height 0.3s ease;
 }
 
 .gen-mobile-params-panel.open {
   display: block;
-  max-height: 40vh;
+  max-height: 50vh;
+  overflow: visible;
 }
 
 .gen-mobile-params-panel .gen-options {
   gap: var(--space-md);
+  max-height: 45vh;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: var(--space-sm) 0;
 }
 
 .gen-mobile-params-panel .gen-option-row {
