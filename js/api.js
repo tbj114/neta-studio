@@ -196,7 +196,7 @@ const API = (() => {
 
   // ============ 作品集 (Story/Collection) ============
   const Story = {
-    getDetail: (uuids) => get('/v3/story/story-detail', { uuid: uuids }),
+    getDetail: (uuids) => get('/v3/story/story-detail', { uuids }),
     deleteCollections: (uuids) => del('/v3/story/collection', { query: { uuid: uuids } }),
     createEmpty: () => get('/v1/story/new-story'),
     save: (data) => put('/v3/story/story', data),

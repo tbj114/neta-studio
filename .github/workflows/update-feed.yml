@@ -23,7 +23,7 @@ jobs:
 
           # 抓取多页 feed 数据
           ALL_ITEMS="[]"
-          for PAGE in 0 1 2 3 4; do
+          for PAGE in $(seq 0 9); do
             echo "Fetching page $PAGE..."
             RESP=$(curl -s -H "x-token: $ANON_UUID" "https://api.talesofai.cn/v1/home/feed/mainlist?page_index=$PAGE&page_size=20")
             ITEMS=$(echo "$RESP" | python3 -c "
