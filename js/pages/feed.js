@@ -166,13 +166,16 @@ class FeedPage {
 
   // ============ 解析 API 响应中的列表数据 ============
   _extractItems(data) {
-    // 模块化响应格式（/v1/home/feed/interactive）
+    // 模块化响应格式（/v1/home/feed/mainlist 或 interactive）
     if (data?.module_list && Array.isArray(data.module_list)) {
       const items = [];
       for (const mod of data.module_list) {
         const modData = mod?.json_data || mod?.data || {};
-        // 每个模块的 json_data 就是一个 story 对象
-        if (modData.uuid && typeof modData.uuid === 'string') {
+        const tpl = mod?.template_id || '';
+        // 跳过非内容模块（ACTIVITY 等）
+        if (tpl === 'ACTIVITY' || tpl === 'head_filter_module') continue;
+        // 每个模块的 json_data 就是一个 story 对象（用 storyId 或 uuid 标识）
+        if ((modData.storyId || modData.uuid) && typeof (modData.storyId || modData.uuid) === 'string') {
           items.push(modData);
         }
       }
@@ -380,7 +383,7 @@ class FeedPage {
     const videos = item.videos || [];
 
     return {
-      uuid: item.uuid || item.id,
+      uuid: item.storyId || item.uuid || item.id,
       title: item.name || item.title || '未命名作品集',
       cover: cover,
       coverHeight: item.cover_height || null,
