@@ -1,0 +1,93 @@
+name: Update Feed Data
+
+on:
+  schedule:
+    # 每30分钟更新一次
+    - cron: '*/30 * * * *'
+  workflow_dispatch: # 允许手动触发
+
+permissions:
+  contents: write
+
+jobs:
+  update-feed:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Fetch feed data
+        run: |
+          # 获取匿名身份
+          ANON_UUID=$(curl -s -X POST "https://api.talesofai.cn/v2/users/anonymous-ad" | python3 -c "import sys,json;print(json.load(sys.stdin)['uuid'])")
+          echo "Anonymous UUID: $ANON_UUID"
+
+          # 抓取多页 feed 数据
+          ALL_ITEMS="[]"
+          for PAGE in 0 1 2 3 4; do
+            echo "Fetching page $PAGE..."
+            RESP=$(curl -s -H "x-token: $ANON_UUID" "https://api.talesofai.cn/v1/home/feed/mainlist?page_index=$PAGE&page_size=20")
+            ITEMS=$(echo "$RESP" | python3 -c "
+          import sys, json
+          d = json.load(sys.stdin)
+          items = []
+          for mod in d.get('module_list', []):
+              jd = mod.get('json_data', {})
+              tpl = mod.get('template_id', '')
+              if tpl in ('ACTIVITY', 'head_filter_module'):
+                  continue
+              if jd.get('storyId') or jd.get('uuid'):
+                  items.append(jd)
+          print(json.dumps(items, ensure_ascii=False))
+          ")
+            ALL_ITEMS=$(python3 -c "import sys,json;a=json.loads('$ALL_ITEMS');b=json.loads('''$ITEMS''');print(json.dumps(a+b,ensure_ascii=False))")
+          done
+
+          # 保存为精简 JSON
+          echo "$ALL_ITEMS" | python3 -c "
+          import sys, json
+          items = json.load(sys.stdin)
+          seen = set()
+          unique = []
+          for item in items:
+              key = item.get('storyId') or item.get('uuid')
+              if key and key not in seen:
+                  seen.add(key)
+                  unique.append(item)
+          slim = []
+          for item in unique:
+              dd = item.get('displayData') or {}
+              pages = dd.get('pages') or []
+              first_page = pages[0] if pages else {}
+              images = first_page.get('images') or []
+              creator = item.get('creator') or {}
+              slim.append({
+                  'storyId': item.get('storyId') or item.get('uuid') or item.get('id'),
+                  'name': item.get('name') or item.get('title') or '',
+                  'coverUrl': item.get('coverUrl') or (images[0].get('url') if images else ''),
+                  'description': item.get('description') or '',
+                  'aspect': item.get('aspect') or '1:1',
+                  'likeCount': item.get('likeCount') or 0,
+                  'favorCount': item.get('favorCount') or 0,
+                  'commentCount': item.get('commentCount') or 0,
+                  'sharedCount': item.get('sharedCount') or 0,
+                  'picCount': item.get('picCount') or 0,
+                  'hashtags': item.get('hashtags') or [],
+                  'creator': {
+                      'uuid': creator.get('uuid') or '',
+                      'nick_name': creator.get('nick_name') or creator.get('nickname') or '',
+                      'avatar_url': creator.get('avatar_url') or creator.get('avatar') or '',
+                  },
+                  'shareUrl': item.get('shareUrl') or '',
+                  'ctime': item.get('ctime') or '',
+              })
+          with open('data/feed.json', 'w', encoding='utf-8') as f:
+              json.dump(slim, f, ensure_ascii=False, indent=2)
+          print(f'Total unique items: {len(slim)}')
+          "
+
+      - name: Commit and push
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/feed.json
+          git diff --cached --quiet || (git commit -m "chore: update feed data [skip ci]" && git push)
