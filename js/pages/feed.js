@@ -9,7 +9,7 @@ class FeedPage {
     if (!this.container) throw new Error('FeedPage: 容器不存在');
 
     // 状态
-    this.currentPage = 1;
+    this.currentPage = 0;
     this.pageSize = 20;
     this.totalPages = 1;
     this.isLoading = false;
@@ -158,7 +158,7 @@ class FeedPage {
 
     // 刷新
     this.els.refreshBtn.addEventListener('click', () => {
-      this.currentPage = 1;
+      this.currentPage = 0;
       this.hasMore = true;
       this._loadFeeds();
     });
@@ -171,11 +171,10 @@ class FeedPage {
       const items = [];
       for (const mod of data.module_list) {
         const modData = mod?.json_data || mod?.data || {};
-        // story_list 或 list
-        const list = modData.story_list || modData.list || modData.items || [];
-        if (Array.isArray(list)) items.push(...list);
-        // 单个 story
-        if (modData.story && typeof modData.story === 'object') items.push(modData.story);
+        // 每个模块的 json_data 就是一个 story 对象
+        if (modData.uuid && typeof modData.uuid === 'string') {
+          items.push(modData);
+        }
       }
       if (items.length > 0) return items;
     }
@@ -308,7 +307,7 @@ class FeedPage {
         const retryBtn = this.els.content.querySelector('#feed-retry-btn');
         if (retryBtn) {
           retryBtn.addEventListener('click', () => {
-            this.currentPage = 1;
+            this.currentPage = 0;
             this.hasMore = true;
             this._loadFeeds();
           });
@@ -371,26 +370,30 @@ class FeedPage {
 
   // ============ 标准化作品集数据 ============
   _normalizeStory(item) {
-    const cover = item.cover_url || item.thumbnail || item.cover || '';
-    const author = item.user || item.author || {};
-    const pictures = item.pictures || item.images || [];
+    const displayData = item.displayData || {};
+    const pages = displayData.pages || [];
+    const firstPage = pages[0] || {};
+    const images = firstPage.images || [];
+    const cover = item.coverUrl || item.cover_url || item.thumbnail || item.cover || (images[0]?.url) || '';
+    const creator = item.creator || item.user || item.author || {};
+    const pictures = item.pictures || item.images || images.map(img => ({ url: img.url, uuid: img.uuid }));
     const videos = item.videos || [];
 
     return {
       uuid: item.uuid || item.id,
-      title: item.title || '未命名作品集',
+      title: item.name || item.title || '未命名作品集',
       cover: cover,
       coverHeight: item.cover_height || null,
       description: item.description || item.detail || '',
-      authorName: author.nickname || author.name || author.username || '匿名用户',
-      authorAvatar: author.avatar || author.head_url || '',
-      authorUuid: author.uuid || author.id || '',
-      likeCount: item.like_count || item.likes || 0,
-      favorCount: item.favor_count || item.favors || 0,
-      viewCount: item.view_count || item.views || 0,
-      isLiked: item.is_like || false,
-      isFavored: item.is_favor || false,
-      pictureCount: pictures.length + videos.length,
+      authorName: creator.nick_name || creator.nickname || creator.name || creator.username || '匿名用户',
+      authorAvatar: creator.avatar_url || creator.avatar || creator.head_url || '',
+      authorUuid: creator.uuid || creator.id || '',
+      likeCount: item.likeCount || item.like_count || item.likes || 0,
+      favorCount: item.favorCount || item.favor_count || item.favors || 0,
+      viewCount: item.viewCount || item.view_count || item.views || 0,
+      isLiked: item.likeStatus || item.is_like || false,
+      isFavored: item.favorStatus || item.is_favor || false,
+      pictureCount: item.picCount || pictures.length + videos.length,
       pictures: pictures,
       videos: videos,
       raw: item,
