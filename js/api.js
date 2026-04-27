@@ -180,7 +180,7 @@ const API = (() => {
     like: (uuid) => put('/v1/story/story-like', { uuid, like: true }),
     unlike: (uuid) => put('/v1/story/story-like', { uuid, like: false }),
     getSameStyle: (uuid, page = 1, size = 20) => get('/v3/story/same-style-stories', { uuid, page_index: page, page_size: size }),
-    feeds: (query) => get('/v1/home/feed/mainlist', query),
+    feeds: (query) => get('/v1/home/feed/interactive', query),
     generateTitle: (data) => post('/v3/story/generate-story-title', data),
     generateDetail: (data) => post('/v3/gpt/dify/text-complete', data),
     userStories: (uuid, page = 1, pageSize = 20) => get('/v2/story/user-stories', { uuid, page, page_size: pageSize }),

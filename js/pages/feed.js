@@ -166,7 +166,20 @@ class FeedPage {
 
   // ============ 解析 API 响应中的列表数据 ============
   _extractItems(data) {
-    // 尝试多种常见的响应格式
+    // 模块化响应格式（/v1/home/feed/interactive）
+    if (data?.module_list && Array.isArray(data.module_list)) {
+      const items = [];
+      for (const mod of data.module_list) {
+        const modData = mod?.json_data || mod?.data || {};
+        // story_list 或 list
+        const list = modData.story_list || modData.list || modData.items || [];
+        if (Array.isArray(list)) items.push(...list);
+        // 单个 story
+        if (modData.story && typeof modData.story === 'object') items.push(modData.story);
+      }
+      if (items.length > 0) return items;
+    }
+    // 标准响应格式
     if (Array.isArray(data?.data?.list)) return data.data.list;
     if (Array.isArray(data?.data) && data.data.length > 0 && typeof data.data[0] === 'object') return data.data;
     if (Array.isArray(data?.list)) return data.list;
@@ -177,6 +190,9 @@ class FeedPage {
 
   // ============ 解析 API 响应中的总数 ============
   _extractTotal(data, itemsLength) {
+    if (data?.page_data?.has_next_page !== undefined) {
+      return data.page_data.has_next_page ? itemsLength + 1 : itemsLength;
+    }
     if (typeof data?.data?.total === 'number') return data.data.total;
     if (typeof data?.total === 'number') return data.total;
     if (typeof data?.total_count === 'number') return data.total_count;
