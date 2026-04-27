@@ -887,8 +887,12 @@ class GeneratePage {
         response = await API.Artifact.makeImage(data);
       } else if (this.mode === 'music') {
         const lyrics = this.els.musicLyrics ? this.els.musicLyrics.value.trim() : '';
+        if (prompt.length < 10) {
+          Components.Toast.warn('描述至少需要 10 个字符');
+          return;
+        }
         console.log('[Nieta] 音乐请求:', JSON.stringify({ prompt, lyrics }));
-        response = await API.Audio.makeSong(prompt, lyrics || ' ', { entrance: 'VERSE' });
+        response = await API.Audio.makeSong(prompt, lyrics.length >= 10 ? lyrics : '', { entrance: 'VERSE' });
       } else {
         const data = this._buildGenerateData();
         // 视频模式：使用视频模型
