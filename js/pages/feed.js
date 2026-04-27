@@ -227,7 +227,10 @@ class FeedPage {
         page_size: this.pageSize,
       });
 
+      console.log('[Feed] API 响应:', JSON.stringify(data).slice(0, 1000));
+
       const items = this._extractItems(data);
+      console.log('[Feed] 提取到 items:', items.length);
       const total = this._extractTotal(data, items.length);
 
       // 如果无法从响应中获取明确的 total，根据返回条数推断
