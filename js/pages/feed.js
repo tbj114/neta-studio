@@ -255,7 +255,7 @@ class FeedPage {
       this.pagination.setPage(1);
 
       if (this.stories.length > 0) {
-        this.els.count.textContent = `共 ${total} 个作品集`;
+        this.els.count.textContent = `共 ${this.stories.length} 个作品集`;
       } else {
         this.els.count.textContent = '';
       }
