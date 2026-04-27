@@ -10,8 +10,6 @@ const API = (() => {
 
   // 伪装请求头（模拟 app.nieta.art 的 Web 端请求）
   const FAKE_HEADERS = {
-    'Origin': 'https://app.nieta.art',
-    'Referer': 'https://app.nieta.art/',
     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147.0.0.0',
     'Accept': '*/*',
     'Accept-Language': 'zh-CN,zh;q=0.9,en;q=0.8',
@@ -30,6 +28,32 @@ const API = (() => {
 
   // Token 管理
   let _token = localStorage.getItem('nieta_x_token') || '';
+  let _anonymousToken = localStorage.getItem('nieta_anonymous_token') || '';
+  let _anonymousPromise = null;
+
+  // 获取匿名身份（用于 feed 等公开接口）
+  async function ensureAnonymousToken() {
+    if (_anonymousToken) return _anonymousToken;
+    if (_anonymousPromise) return _anonymousPromise;
+    _anonymousPromise = (async () => {
+      try {
+        const res = await fetch(`${BASE_URL}/v2/users/anonymous-ad`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+        });
+        const data = await res.json();
+        if (data.uuid) {
+          _anonymousToken = data.uuid;
+          localStorage.setItem('nieta_anonymous_token', data.uuid);
+        }
+      } catch (e) {
+        console.warn('[API] 获取匿名身份失败:', e);
+      }
+      _anonymousPromise = null;
+      return _anonymousToken;
+    })();
+    return _anonymousPromise;
+  }
 
   function setToken(token) {
     _token = token;
@@ -180,7 +204,14 @@ const API = (() => {
     like: (uuid) => put('/v1/story/story-like', { uuid, like: true }),
     unlike: (uuid) => put('/v1/story/story-like', { uuid, like: false }),
     getSameStyle: (uuid, page = 1, size = 20) => get('/v3/story/same-style-stories', { uuid, page_index: page, page_size: size }),
-    feeds: (query) => get('/v1/home/feed/mainlist', query),
+    feeds: async (query) => {
+      // feed 接口需要身份认证才能返回内容
+      if (!_token) await ensureAnonymousToken();
+      const token = _token || _anonymousToken;
+      return get('/v1/home/feed/mainlist', query, {
+        headers: token ? { 'x-token': token } : {},
+      });
+    },
     generateTitle: (data) => post('/v3/story/generate-story-title', data),
     generateDetail: (data) => post('/v3/gpt/dify/text-complete', data),
     userStories: (uuid, page = 1, pageSize = 20) => get('/v2/story/user-stories', { uuid, page, page_size: pageSize }),
