@@ -240,38 +240,19 @@ class FeedPage {
     this.els.content.innerHTML = Components.loadingState('加载 Feed 中...');
 
     try {
-      const data = await API.Story.feeds({
-        page_index: this.currentPage,
-        page_size: this.pageSize,
-      });
+      // 加载静态 JSON（由 GitHub Actions 定时更新，绕过 CORS 限制）
+      const resp = await fetch('data/feed.json');
+      if (!resp.ok) throw new Error(`加载 feed.json 失败: HTTP ${resp.status}`);
+      const items = await resp.json();
 
-      console.log('[Feed] API 响应:', JSON.stringify(data).slice(0, 1000));
-
-      const items = this._extractItems(data);
-      console.log('[Feed] 提取到 items:', items.length);
-      const total = this._extractTotal(data, items.length);
-
-      // 如果无法从响应中获取明确的 total，根据返回条数推断
-      const hasExplicitTotal = typeof data?.data?.total === 'number'
-        || typeof data?.total === 'number'
-        || typeof data?.total_count === 'number'
-        || typeof data?.data?.total_count === 'number';
+      console.log('[Feed] 加载 feed.json:', items.length, '条');
 
       this.stories = items.map(item => this._normalizeStory(item));
+      this.totalPages = 1;
+      this.hasMore = false;
 
-      if (hasExplicitTotal) {
-        this.totalPages = Math.max(1, Math.ceil(total / this.pageSize));
-      } else {
-        // 无法获取 total 时，根据返回条数判断是否还有更多
-        this.totalPages = items.length < this.pageSize
-          ? this.currentPage
-          : this.currentPage + 1;
-      }
-
-      this.hasMore = this.currentPage < this.totalPages;
-
-      this.pagination.setTotalPages(this.totalPages);
-      this.pagination.setPage(this.currentPage);
+      this.pagination.setTotalPages(1);
+      this.pagination.setPage(1);
 
       if (this.stories.length > 0) {
         this.els.count.textContent = `共 ${total} 个作品集`;
@@ -373,32 +354,30 @@ class FeedPage {
 
   // ============ 标准化作品集数据 ============
   _normalizeStory(item) {
-    const displayData = item.displayData || {};
-    const pages = displayData.pages || [];
-    const firstPage = pages[0] || {};
-    const images = firstPage.images || [];
-    const cover = item.coverUrl || item.cover_url || item.thumbnail || item.cover || (images[0]?.url) || '';
-    const creator = item.creator || item.user || item.author || {};
-    const pictures = item.pictures || item.images || images.map(img => ({ url: img.url, uuid: img.uuid }));
-    const videos = item.videos || [];
+    const creator = item.creator || {};
+    const cover = item.coverUrl || item.cover_url || item.thumbnail || item.cover || '';
+    const hashtags = item.hashtags || [];
 
     return {
       uuid: item.storyId || item.uuid || item.id,
       title: item.name || item.title || '未命名作品集',
       cover: cover,
-      coverHeight: item.cover_height || null,
+      coverHeight: null,
       description: item.description || item.detail || '',
-      authorName: creator.nick_name || creator.nickname || creator.name || creator.username || '匿名用户',
-      authorAvatar: creator.avatar_url || creator.avatar || creator.head_url || '',
+      authorName: creator.nick_name || creator.nickname || creator.name || '匿名用户',
+      authorAvatar: creator.avatar_url || creator.avatar || '',
       authorUuid: creator.uuid || creator.id || '',
-      likeCount: item.likeCount || item.like_count || item.likes || 0,
-      favorCount: item.favorCount || item.favor_count || item.favors || 0,
-      viewCount: item.viewCount || item.view_count || item.views || 0,
-      isLiked: item.likeStatus || item.is_like || false,
-      isFavored: item.favorStatus || item.is_favor || false,
-      pictureCount: item.picCount || pictures.length + videos.length,
-      pictures: pictures,
-      videos: videos,
+      likeCount: item.likeCount || item.like_count || 0,
+      favorCount: item.favorCount || item.favor_count || 0,
+      viewCount: item.viewCount || item.view_count || 0,
+      isLiked: false,
+      isFavored: false,
+      pictureCount: item.picCount || 0,
+      pictures: [],
+      videos: [],
+      hashtags: hashtags.map(h => typeof h === 'string' ? h : h?.name || '').filter(Boolean),
+      shareUrl: item.shareUrl || '',
+      aspect: item.aspect || '1:1',
       raw: item,
     };
   }

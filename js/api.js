@@ -7,8 +7,6 @@ const API = (() => {
   // ===== 直连上游 API =====
   const BASE_URL = 'https://api.talesofai.cn';
   const OSS_BASE = 'https://oss.talesofai.cn';
-  // CORS 代理（用于 feed 等需要 Origin 白名单的接口）
-  const CORS_PROXY = 'https://corsproxy.io/?url=';
 
   // 伪装请求头（模拟 app.nieta.art 的 Web 端请求）
   const FAKE_HEADERS = {
@@ -206,19 +204,11 @@ const API = (() => {
     like: (uuid) => put('/v1/story/story-like', { uuid, like: true }),
     unlike: (uuid) => put('/v1/story/story-like', { uuid, like: false }),
     getSameStyle: (uuid, page = 1, size = 20) => get('/v3/story/same-style-stories', { uuid, page_index: page, page_size: size }),
-    feeds: async (query) => {
-      // feed 接口需要 Origin: app.nieta.art 才返回内容，通过 CORS 代理绕过
-      if (!_token) await ensureAnonymousToken();
-      const token = _token || _anonymousToken;
-      const params = new URLSearchParams(query || {});
-      const qs = params.toString();
-      const targetUrl = `${BASE_URL}/v1/home/feed/mainlist${qs ? '?' + qs : ''}`;
-      const proxyUrl = `${CORS_PROXY}${encodeURIComponent(targetUrl)}`;
-      const headers = { 'Content-Type': 'application/json' };
-      if (token) headers['x-token'] = token;
-      const res = await fetch(proxyUrl, { headers });
-      if (!res.ok) throw new Error(`Feed 请求失败: HTTP ${res.status}`);
-      return await res.json();
+    feeds: async () => {
+      // Feed 通过静态 JSON 加载（data/feed.json），由 GitHub Actions 定时更新
+      const resp = await fetch('data/feed.json');
+      if (!resp.ok) throw new Error(`加载 feed 失败: HTTP ${resp.status}`);
+      return await resp.json();
     },
     generateTitle: (data) => post('/v3/story/generate-story-title', data),
     generateDetail: (data) => post('/v3/gpt/dify/text-complete', data),
