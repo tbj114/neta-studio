@@ -48,6 +48,7 @@ class GeneratePage {
       { id: '2_netaxl', name: '模型 2.0' },
       { id: '3_noobxl', name: '模型 3.0' },
       { id: '5_lumina', name: 'Lumina' },
+      { id: 'gpt-image-2', name: 'GPT Image 2' },
       { id: '8_image_edit', name: '图片编辑' },
     ];
 
@@ -1477,6 +1478,7 @@ class GeneratePage {
             <option value="2_netaxl">模型 2.0</option>
             <option value="3_noobxl">模型 3.0</option>
             <option value="5_lumina" selected>Lumina</option>
+            <option value="gpt-image-2">GPT Image 2</option>
             <option value="8_image_edit">图片编辑</option>
           </select>
         </div>
